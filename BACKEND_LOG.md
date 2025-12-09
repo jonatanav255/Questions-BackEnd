@@ -319,13 +319,13 @@ Our implementation philosophy for this project:
 
 ### Phase 1: Core Data APIs
 
-#### 1.1 Category API
+#### 1.1 Category API ✅ COMPLETE
 - [x] Create Category entity
 - [x] Create CategoryRepository
 - [x] Create CategoryService (with question count logic)
-- [ ] Create CategoryController
-- [ ] Test CRUD operations
-- [ ] **API Endpoints**: GET, POST, PUT, DELETE `/api/categories`
+- [x] Create CategoryController
+- [x] Test CRUD operations
+- [x] **API Endpoints**: GET, POST, PUT, DELETE `/api/categories`
 
 #### 1.2 Tag API
 - [ ] Create Tag entity
@@ -398,7 +398,7 @@ Our implementation philosophy for this project:
 ### API Endpoints (2025-12-08)
 - ✅ Health check API: `GET /api/health` and `GET /api/health/ping`
 
-### Category API (2025-12-08)
+### Category API (2025-12-08) ✅ COMPLETE
 - ✅ **Category Entity** created with validation annotations
   - Fields: id (UUID), name, color, icon, questionCount, createdAt
   - Validation: @NotBlank, @Size constraints
@@ -412,9 +412,43 @@ Our implementation philosophy for this project:
   - Delete protection (prevents deletion if category has questions)
   - Question count management: incrementQuestionCount(), decrementQuestionCount()
   - Uses @Transactional for database safety
+- ✅ **CategoryController** created with REST endpoints
+  - `GET /api/categories` - Get all categories (200 OK)
+  - `GET /api/categories/{id}` - Get one category (200 OK or 404 Not Found)
+  - `POST /api/categories` - Create category (201 Created or 400 Bad Request)
+  - `PUT /api/categories/{id}` - Update category (200 OK or 400 Bad Request)
+  - `DELETE /api/categories/{id}` - Delete category (204 No Content, 404, or 409 Conflict)
+  - Error handling: 400 for validation, 404 for not found, 409 for categories with questions
+
+### Category API Testing (2025-12-08) ✅ COMPLETE
+- ✅ Application starts successfully on port 8080
+- ✅ Database table `categories` created automatically by Hibernate
+- ✅ **POST /api/categories** - Successfully creates categories with UUID and timestamp
+- ✅ **GET /api/categories** - Returns all categories as JSON array
+- ✅ **Duplicate prevention** - Returns 400 Bad Request with error message when name exists
+- ✅ All validation working (@NotBlank, @Size constraints)
+
+**Test Results:**
+```bash
+# Create category
+curl -X POST http://localhost:8080/api/categories \
+  -H "Content-Type: application/json" \
+  -d '{"name": "Java", "color": "bg-blue-500", "icon": "/java.svg"}'
+# Response: 201 Created with full category object including UUID
+
+# Get all categories
+curl http://localhost:8080/api/categories
+# Response: 200 OK with array of categories
+
+# Try duplicate name
+curl -X POST http://localhost:8080/api/categories \
+  -H "Content-Type: application/json" \
+  -d '{"name": "Java", "color": "bg-red-500", "icon": "/test.svg"}'
+# Response: 400 Bad Request - "Category with name 'Java' already exists"
+```
 
 ### In Progress
-- 🚧 **Next**: CategoryController (REST API endpoints)
+- 🚧 **Next**: Tag API (Entity → Repository → Service → Controller)
 
 ---
 
