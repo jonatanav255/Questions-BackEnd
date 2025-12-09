@@ -34,7 +34,7 @@ build/
 
 # Development Logs
 DEV_LOG.md
-BACKEND_LOG.md
+# BACKEND_LOG.md
 
 # macOS
 .DS_Store
