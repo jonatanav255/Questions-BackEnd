@@ -1,12 +1,14 @@
 package com.questions.backend.service;
 
 import com.questions.backend.entity.Category;
+import com.questions.backend.exception.DuplicateResourceException;
+import com.questions.backend.exception.ResourceConflictException;
+import com.questions.backend.exception.ResourceNotFoundException;
 import com.questions.backend.repository.CategoryRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
 /**
@@ -36,10 +38,12 @@ public class CategoryService {
      * Get a category by ID.
      *
      * @param id the category ID
-     * @return Optional containing the category if found
+     * @return the category
+     * @throws ResourceNotFoundException if category not found
      */
-    public Optional<Category> getCategoryById(UUID id) {
-        return categoryRepository.findById(id);
+    public Category getCategoryById(UUID id) {
+        return categoryRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Category", "id", id));
     }
 
     /**
@@ -47,12 +51,12 @@ public class CategoryService {
      *
      * @param category the category to create
      * @return the created category
-     * @throws IllegalArgumentException if a category with the same name already exists
+     * @throws DuplicateResourceException if a category with the same name already exists
      */
     public Category createCategory(Category category) {
         // Check if category with this name already exists
         if (categoryRepository.existsByName(category.getName())) {
-            throw new IllegalArgumentException("Category with name '" + category.getName() + "' already exists");
+            throw new DuplicateResourceException("Category", "name", category.getName());
         }
 
         // Initialize question count to 0 if not set
@@ -69,16 +73,17 @@ public class CategoryService {
      * @param id the category ID
      * @param updatedCategory the updated category data
      * @return the updated category
-     * @throws IllegalArgumentException if category not found or name conflict
+     * @throws ResourceNotFoundException if category not found
+     * @throws DuplicateResourceException if name conflict with another category
      */
     public Category updateCategory(UUID id, Category updatedCategory) {
         Category existingCategory = categoryRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Category not found with id: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Category", "id", id));
 
         // Check if the new name conflicts with another category
         if (!existingCategory.getName().equals(updatedCategory.getName())) {
             if (categoryRepository.existsByName(updatedCategory.getName())) {
-                throw new IllegalArgumentException("Category with name '" + updatedCategory.getName() + "' already exists");
+                throw new DuplicateResourceException("Category", "name", updatedCategory.getName());
             }
         }
 
@@ -94,16 +99,16 @@ public class CategoryService {
      * Delete a category by ID.
      *
      * @param id the category ID
-     * @throws IllegalArgumentException if category not found
-     * @throws IllegalStateException if category has questions (cannot delete)
+     * @throws ResourceNotFoundException if category not found
+     * @throws ResourceConflictException if category has questions (cannot delete)
      */
     public void deleteCategory(UUID id) {
         Category category = categoryRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Category not found with id: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Category", "id", id));
 
         // Prevent deletion if category has questions
         if (category.getQuestionCount() > 0) {
-            throw new IllegalStateException(
+            throw new ResourceConflictException(
                     "Cannot delete category '" + category.getName() + "' because it contains "
                     + category.getQuestionCount() + " question(s)"
             );
@@ -117,10 +122,11 @@ public class CategoryService {
      * Called when a question is added to this category.
      *
      * @param categoryId the category ID
+     * @throws ResourceNotFoundException if category not found
      */
     public void incrementQuestionCount(UUID categoryId) {
         Category category = categoryRepository.findById(categoryId)
-                .orElseThrow(() -> new IllegalArgumentException("Category not found with id: " + categoryId));
+                .orElseThrow(() -> new ResourceNotFoundException("Category", "id", categoryId));
 
         category.setQuestionCount(category.getQuestionCount() + 1);
         categoryRepository.save(category);
@@ -131,10 +137,11 @@ public class CategoryService {
      * Called when a question is removed from this category.
      *
      * @param categoryId the category ID
+     * @throws ResourceNotFoundException if category not found
      */
     public void decrementQuestionCount(UUID categoryId) {
         Category category = categoryRepository.findById(categoryId)
-                .orElseThrow(() -> new IllegalArgumentException("Category not found with id: " + categoryId));
+                .orElseThrow(() -> new ResourceNotFoundException("Category", "id", categoryId));
 
         if (category.getQuestionCount() > 0) {
             category.setQuestionCount(category.getQuestionCount() - 1);

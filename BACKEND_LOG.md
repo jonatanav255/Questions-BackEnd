@@ -420,32 +420,32 @@ Our implementation philosophy for this project:
   - `DELETE /api/categories/{id}` - Delete category (204 No Content, 404, or 409 Conflict)
   - Error handling: 400 for validation, 404 for not found, 409 for categories with questions
 
+### Production-Grade Error Handling (2025-12-08) ✅ COMPLETE
+- ✅ **ErrorResponse DTO** - Consistent error structure across all endpoints
+  - Fields: timestamp, status, error, message, path
+- ✅ **Custom Exceptions**:
+  - `ResourceNotFoundException` → 404 Not Found
+  - `DuplicateResourceException` → 409 Conflict
+  - `ResourceConflictException` → 409 Conflict
+- ✅ **GlobalExceptionHandler** - Centralized exception handling with @RestControllerAdvice
+  - Handles ResourceNotFoundException (404)
+  - Handles DuplicateResourceException (409)
+  - Handles ResourceConflictException (409)
+  - Handles validation errors from @Valid (400)
+  - Handles IllegalArgumentException (400)
+  - Catch-all for unexpected exceptions (500)
+- ✅ **Updated CategoryService** - Uses custom exceptions instead of generic ones
+- ✅ **Updated CategoryController** - Clean controller code, exceptions handled globally
+
 ### Category API Testing (2025-12-08) ✅ COMPLETE
 - ✅ Application starts successfully on port 8080
 - ✅ Database table `categories` created automatically by Hibernate
-- ✅ **POST /api/categories** - Successfully creates categories with UUID and timestamp
-- ✅ **GET /api/categories** - Returns all categories as JSON array
-- ✅ **Duplicate prevention** - Returns 400 Bad Request with error message when name exists
-- ✅ All validation working (@NotBlank, @Size constraints)
-
-**Test Results:**
-```bash
-# Create category
-curl -X POST http://localhost:8080/api/categories \
-  -H "Content-Type: application/json" \
-  -d '{"name": "Java", "color": "bg-blue-500", "icon": "/java.svg"}'
-# Response: 201 Created with full category object including UUID
-
-# Get all categories
-curl http://localhost:8080/api/categories
-# Response: 200 OK with array of categories
-
-# Try duplicate name
-curl -X POST http://localhost:8080/api/categories \
-  -H "Content-Type: application/json" \
-  -d '{"name": "Java", "color": "bg-red-500", "icon": "/test.svg"}'
-# Response: 400 Bad Request - "Category with name 'Java' already exists"
-```
+- ✅ All CRUD operations tested and working (POST, GET, PUT, DELETE)
+- ✅ Professional error responses - All errors return ErrorResponse with timestamp, status, error, message, path
+- ✅ Validation tested (400 for blank name)
+- ✅ Duplicate prevention tested (409 Conflict)
+- ✅ Not found tested (404)
+- ✅ All HTTP status codes correct
 
 ### In Progress
 - 🚧 **Next**: Tag API (Entity → Repository → Service → Controller)

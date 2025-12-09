@@ -13,6 +13,9 @@ import java.util.UUID;
 /**
  * REST Controller for Category API.
  * Handles HTTP requests for category operations.
+ *
+ * Exception handling is done globally by GlobalExceptionHandler,
+ * so this controller only needs to call service methods.
  */
 @RestController
 @RequestMapping("/api/categories")
@@ -41,13 +44,13 @@ public class CategoryController {
      * Get a single category by ID.
      *
      * @param id the category ID
-     * @return the category if found, 404 if not found
+     * @return the category
+     * @throws com.questions.backend.exception.ResourceNotFoundException if not found (handled by GlobalExceptionHandler)
      */
     @GetMapping("/{id}")
     public ResponseEntity<Category> getCategoryById(@PathVariable UUID id) {
-        return categoryService.getCategoryById(id)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+        Category category = categoryService.getCategoryById(id);
+        return ResponseEntity.ok(category);
     }
 
     /**
@@ -55,16 +58,13 @@ public class CategoryController {
      * Create a new category.
      *
      * @param category the category to create
-     * @return the created category with 201 status, or 400 if validation fails
+     * @return the created category with 201 Created status
+     * @throws com.questions.backend.exception.DuplicateResourceException if name already exists (handled by GlobalExceptionHandler)
      */
     @PostMapping
-    public ResponseEntity<?> createCategory(@Valid @RequestBody Category category) {
-        try {
-            Category createdCategory = categoryService.createCategory(category);
-            return ResponseEntity.status(HttpStatus.CREATED).body(createdCategory);
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
+    public ResponseEntity<Category> createCategory(@Valid @RequestBody Category category) {
+        Category createdCategory = categoryService.createCategory(category);
+        return ResponseEntity.status(HttpStatus.CREATED).body(createdCategory);
     }
 
     /**
@@ -73,16 +73,16 @@ public class CategoryController {
      *
      * @param id the category ID
      * @param category the updated category data
-     * @return the updated category, 404 if not found, or 400 if validation fails
+     * @return the updated category
+     * @throws com.questions.backend.exception.ResourceNotFoundException if not found (handled by GlobalExceptionHandler)
+     * @throws com.questions.backend.exception.DuplicateResourceException if name conflict (handled by GlobalExceptionHandler)
      */
     @PutMapping("/{id}")
-    public ResponseEntity<?> updateCategory(@PathVariable UUID id, @Valid @RequestBody Category category) {
-        try {
-            Category updatedCategory = categoryService.updateCategory(id, category);
-            return ResponseEntity.ok(updatedCategory);
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
+    public ResponseEntity<Category> updateCategory(
+            @PathVariable UUID id,
+            @Valid @RequestBody Category category) {
+        Category updatedCategory = categoryService.updateCategory(id, category);
+        return ResponseEntity.ok(updatedCategory);
     }
 
     /**
@@ -90,18 +90,13 @@ public class CategoryController {
      * Delete a category.
      *
      * @param id the category ID
-     * @return 204 No Content if successful, 404 if not found, 409 if category has questions
+     * @return 204 No Content if successful
+     * @throws com.questions.backend.exception.ResourceNotFoundException if not found (handled by GlobalExceptionHandler)
+     * @throws com.questions.backend.exception.ResourceConflictException if category has questions (handled by GlobalExceptionHandler)
      */
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> deleteCategory(@PathVariable UUID id) {
-        try {
-            categoryService.deleteCategory(id);
-            return ResponseEntity.noContent().build();
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.notFound().build();
-        } catch (IllegalStateException e) {
-            // Category has questions - cannot delete
-            return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getMessage());
-        }
+    public ResponseEntity<Void> deleteCategory(@PathVariable UUID id) {
+        categoryService.deleteCategory(id);
+        return ResponseEntity.noContent().build();
     }
 }
