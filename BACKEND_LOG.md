@@ -327,13 +327,13 @@ Our implementation philosophy for this project:
 - [x] Test CRUD operations
 - [x] **API Endpoints**: GET, POST, PUT, DELETE `/api/categories`
 
-#### 1.2 Tag API
-- [ ] Create Tag entity
-- [ ] Create TagRepository
-- [ ] Create TagService
-- [ ] Create TagController
-- [ ] Test CRUD operations
-- [ ] **API Endpoints**: GET, POST `/api/tags`
+#### 1.2 Tag API ✅ **COMPLETED**
+- [x] Create Tag entity
+- [x] Create TagRepository
+- [x] Create TagService
+- [x] Create TagController
+- [x] Test CRUD operations
+- **API Endpoints**: GET, POST, PUT, DELETE `/api/tags`, GET `/api/tags/name/{name}`
 
 #### 1.3 Question API (Most Complex)
 - [ ] Create Question entity (with Category & Tag relationships)
@@ -447,8 +447,39 @@ Our implementation philosophy for this project:
 - ✅ Not found tested (404)
 - ✅ All HTTP status codes correct
 
+### Tag API (2025-12-11) ✅ **COMPLETED**
+- ✅ **Tag Entity** created with validation and database constraints
+  - Fields: id (UUID), name (unique, lowercase normalized), createdAt
+  - Validation: @NotBlank, @Size(min=2, max=50)
+  - Database: unique constraint + index on name for performance
+  - Override equals() and hashCode() for JPA collections
+- ✅ **TagRepository** created
+  - Extends JpaRepository for basic CRUD
+  - Custom methods: `findByName()`, `findByNameIgnoreCase()`, `existsByNameIgnoreCase()`
+  - Case-insensitive queries for better UX
+- ✅ **TagService** created with smart business logic
+  - CRUD operations: getAllTags(), getTagById(), getTagByName(), createTag(), updateTag(), deleteTag()
+  - **Name normalization**: All tags stored in lowercase ("Java" → "java")
+  - **Duplicate prevention**: Case-insensitive check (prevents "java" and "JAVA" as separate tags)
+  - **getOrCreateTag()**: Helper method for Question creation (reuse existing tags or create new)
+  - @Transactional(readOnly = true) for read operations (performance optimization)
+- ✅ **TagController** created with REST endpoints
+  - `GET /api/tags` - Get all tags (200 OK)
+  - `GET /api/tags/{id}` - Get tag by ID (200 OK or 404 Not Found)
+  - `GET /api/tags/name/{name}` - Get tag by name, case-insensitive (200 OK or 404 Not Found)
+  - `POST /api/tags` - Create tag (201 Created or 409 Conflict)
+  - `PUT /api/tags/{id}` - Update tag (200 OK or 409 Conflict)
+  - `DELETE /api/tags/{id}` - Delete tag (204 No Content or 404 Not Found)
+- ✅ **Testing completed** - All CRUD operations verified
+  - ✅ Create tag: "Java" → stored as "java" (normalization works)
+  - ✅ Duplicate prevention: "JAVA" rejected when "java" exists (409 Conflict)
+  - ✅ Get all tags: Returns array of all tags
+  - ✅ Get by name (case-insensitive): "LOOPS" finds "loops"
+  - ✅ Validation: Empty name returns 400 Bad Request
+  - ✅ All HTTP status codes correct
+
 ### In Progress
-- 🚧 **Next**: Tag API (Entity → Repository → Service → Controller)
+- 🚧 **Next**: Question API (Entity with relationships → Repository with pagination → Service → Controller)
 
 ---
 
